@@ -1,87 +1,101 @@
 # DESIGN.md
 
 ## 1. Arquitectura general
-La arquitectura general del sistema de gestión de inspecciones NDT se basa en un enfoque de microservicios, donde cada componente del sistema se ejecuta como un servicio independiente. Esto permite una mayor escalabilidad, flexibilidad y mantenimiento. El sistema se divide en tres capas principales: presentación, lógica de negocio y datos. La capa de presentación se encarga de la interacción con el usuario, la capa de lógica de negocio maneja la lógica de la aplicación y la capa de datos se encarga del almacenamiento y recuperación de los datos.
+El sistema de notificaciones por email para SaaS se diseñará utilizando una arquitectura de microservicios, con componentes separados para el registro de usuarios, configuración de preferencias de notificación, envío de notificaciones y registro de eventos. Esto permitirá una mayor escalabilidad y flexibilidad en el sistema.
 
 ## 2. Decisiones de arquitectura (ADRs)
-### ADR-01: Uso de Node.js como tecnología de backend
-**Decisión:** Se ha decidido utilizar Node.js como tecnología de backend para el desarrollo de la API REST.
-**Razón:** Node.js es una plataforma ligera y eficiente que permite el desarrollo de aplicaciones escalables y de alta velocidad. Además, su gran comunidad y ecosistema de paquetes hacen que sea una excelente opción para el desarrollo de aplicaciones web.
-**Consecuencia:** La elección de Node.js como tecnología de backend implica que debemos utilizar un framework de Node.js, como Express.js, para el desarrollo de la API REST.
+### ADR-01: Elección de tecnología para el envío de correos electrónicos
+**Decisión:** Utilizar un servicio de correo electrónico dedicado como SendGrid o Mailgun para el envío de notificaciones.
+**Razón:** Estos servicios ofrecen una alta confiabilidad y escalabilidad en el envío de correos electrónicos, además de características adicionales como seguimiento y análisis de entregas.
+**Consecuencia:** El sistema dependerá de un servicio externo para el envío de correos electrónicos, lo que puede implicar costos adicionales y dependencia de un proveedor externo.
 
-### ADR-02: Uso de MongoDB como base de datos
-**Decisión:** Se ha decidido utilizar MongoDB como base de datos para el almacenamiento de los datos de inspecciones.
-**Razón:** MongoDB es una base de datos NoSQL que permite el almacenamiento de datos en formato JSON, lo que facilita la integración con la API REST. Además, su capacidad para manejar grandes cantidades de datos y su escalabilidad horizontal hacen que sea una excelente opción para el almacenamiento de los datos de inspecciones.
-**Consecuencia:** La elección de MongoDB como base de datos implica que debemos utilizar un driver de MongoDB para Node.js para interactuar con la base de datos.
+### ADR-02: Diseño de la base de datos
+**Decisión:** Utilizar una base de datos relacional como PostgreSQL para almacenar información de usuarios y notificaciones.
+**Razón:** Las bases de datos relacionales ofrecen una gran flexibilidad y capacidad de consulta, lo que es ideal para almacenar y recuperar información de usuarios y notificaciones.
+**Consecuencia:** El sistema requerirá una configuración y mantenimiento adecuados de la base de datos para garantizar el rendimiento y la integridad de los datos.
 
 ## 3. Estructura de carpetas/proyecto
 ```
-inspecciones-ndt/
-├── app/
-│   ├── controllers/
-│   ├── models/
-│   ├── routes/
-│   └── services/
-├── config/
-├── db/
-├── node_modules/
-├── package.json
-├── README.md
-└── server.js
+notificaciones-saas/
+├── api/
+│   ├── usuarios/
+│   │   ├── __init__.py
+│   │   ├── models.py
+│   │   ├── views.py
+│   │   └── serializers.py
+│   ├── notificaciones/
+│   │   ├── __init__.py
+│   │   ├── models.py
+│   │   ├── views.py
+│   │   └── serializers.py
+│   └── eventos/
+│       ├── __init__.py
+│       ├── models.py
+│       ├── views.py
+│       └── serializers.py
+├── core/
+│   ├── __init__.py
+│   ├── utils.py
+│   └── tasks.py
+├── requirements.txt
+├── settings.py
+└── manage.py
 ```
 
 ## 4. Modelo de datos detallado
-### Inspección
-- **id**: String — Identificador único de la inspección
-- **fecha**: Date — Fecha de la inspección
-- **tipo**: String — Tipo de inspección (por ejemplo, radiografía, ultrasonido, etc.)
-- **componente**: String — Componente inspeccionado
-- **resultado**: String — Resultado de la inspección (por ejemplo, aprobado, rechazado, etc.)
-- **evidencia**: Array<String> — Evidencia o documentación de la inspección
-
-### Componente
-- **id**: String — Identificador único del componente
-- **nombre**: String — Nombre del componente
-- **descripcion**: String — Descripción del componente
-- **ubicacion**: String — Ubicación del componente
-
 ### Usuario
-- **id**: String — Identificador único del usuario
-- **nombre**: String — Nombre del usuario
-- **correo**: String — Correo electrónico del usuario
-- **rol**: String — Rol del usuario (por ejemplo, inspector, técnico, gerente, etc.)
+- `id`: `integer` — Identificador único del usuario
+- `nombre`: `string` — Nombre del usuario
+- `correo_electronico`: `string` — Correo electrónico del usuario
+- `preferencias_notificacion`: `json` — Preferencias de notificación del usuario
+
+### Notificación
+- `id`: `integer` — Identificador único de la notificación
+- `tipo`: `string` — Tipo de notificación (por ejemplo, "registro", "evento", etc.)
+- `contenido`: `string` — Contenido de la notificación
+- `fecha_envio`: `datetime` — Fecha y hora de envío de la notificación
+- `usuario_destino`: `integer` — Identificador del usuario destino de la notificación
+
+### Evento
+- `id`: `integer` — Identificador único del evento
+- `tipo`: `string` — Tipo de evento (por ejemplo, "registro", "actualización", etc.)
+- `fecha_ocurrencia`: `datetime` — Fecha y hora de ocurrencia del evento
+- `descripcion`: `string` — Descripción del evento
 
 ## 5. Diseño de APIs
-### /inspecciones
-- Método: POST
-- URL: /inspecciones
-- Request: { tipo: String, componente: String, resultado: String, evidencia: Array<String> }
-- Response: { id: String, fecha: Date, tipo: String, componente: String, resultado: String, evidencia: Array<String> }
+### /api/usuarios/registro
+- Método: `POST`
+- URL: `/api/usuarios/registro`
+- Request: `{"nombre": "string", "correo_electronico": "string"}`
+- Response: `{"id": integer, "nombre": "string", "correo_electronico": "string"}`
 
-### /inspecciones/{id}
-- Método: GET
-- URL: /inspecciones/{id}
-- Request: None
-- Response: { id: String, fecha: Date, tipo: String, componente: String, resultado: String, evidencia: Array<String> }
+### /api/notificaciones/enviar
+- Método: `POST`
+- URL: `/api/notificaciones/enviar`
+- Request: `{"tipo": "string", "contenido": "string", "usuario_destino": integer}`
+- Response: `{"id": integer, "tipo": "string", "contenido": "string", "fecha_envio": "datetime"}`
 
-### /inspecciones/tipo/{tipo}
-- Método: GET
-- URL: /inspecciones/tipo/{tipo}
-- Request: None
-- Response: Array<{ id: String, fecha: Date, tipo: String, componente: String, resultado: String, evidencia: Array<String> }>
+### /api/eventos/registro
+- Método: `POST`
+- URL: `/api/eventos/registro`
+- Request: `{"tipo": "string", "fecha_ocurrencia": "datetime", "descripcion": "string"}`
+- Response: `{"id": integer, "tipo": "string", "fecha_ocurrencia": "datetime", "descripcion": "string"}`
 
-### /informes
-- Método: POST
-- URL: /informes
-- Request: { tipo: String, fechaInicio: Date, fechaFin: Date }
-- Response: { informe: String }
+### /api/usuarios/preferencias
+- Método: `GET`
+- URL: `/api/usuarios/preferencias`
+- Request: `{"usuario": integer}`
+- Response: `{"preferencias_notificacion": json}`
 
 ## 6. Dependencias externas
-- **express**: 4.17.1 — Framework de Node.js para el desarrollo de la API REST
-- **mongodb**: 3.6.4 — Driver de MongoDB para Node.js
-- **jsonwebtoken**: 8.5.1 — Librería para la generación y verificación de tokens JSON Web
+- `sendgrid`: `6.9.5` — Servicio de correo electrónico dedicado
+- `mailgun`: `0.6.0` — Servicio de correo electrónico dedicado
+- `postgresql`: `12.9` — Base de datos relacional
+- `django`: `3.2.9` — Framework web de Python
+- `djangorestframework`: `3.12.2` — Framework de API REST para Django
 
 ## 7. Seguridad
-- La API REST utiliza tokens JSON Web para la autenticación y autorización de los usuarios.
-- Los datos de inspecciones se almacenan en una base de datos MongoDB segura, con acceso restringido a los usuarios autorizados.
-- La API REST utiliza HTTPS para cifrar las comunicaciones entre el cliente y el servidor.
+- Utilizar autenticación y autorización adecuadas para proteger los endpoints de la API
+- Utilizar HTTPS para cifrar la comunicación entre el cliente y el servidor
+- Utilizar una política de seguridad adecuada para la base de datos y los servicios externos utilizados
+- Realizar pruebas de seguridad y penetración para identificar vulnerabilidades y mejorar la seguridad del sistema

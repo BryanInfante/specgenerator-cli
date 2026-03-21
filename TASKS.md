@@ -1,4 +1,5 @@
 # TASKS.md
+# AI Spec Generator CLI — spec-gen
 
 ## Leyenda
 - [ ] Pendiente
@@ -7,70 +8,110 @@
 
 ---
 
-## FASE 1 — Configuración Inicial
-(agrupa tareas relacionadas con la configuración inicial del proyecto)
+## FASE 1 — Setup del proyecto
 
-- [ ] **T-01** Configurar el entorno de desarrollo (Node.js, npm, MongoDB)
-  - Instalar Node.js y npm
-  - Instalar MongoDB y configurar el servicio
-  - Verificar la instalación y configuración
-- [ ] **T-02** Crear el proyecto y estructura de carpetas
-  - Inicializar el proyecto con npm
-  - Crear la estructura de carpetas y subcarpetas
-  - Configurar el archivo `package.json`
-- [ ] **T-03** Instalar dependencias iniciales (Express, MongoDB, JSON Web Token)
-  - Instalar Express.js
-  - Instalar el driver de MongoDB para Node.js
-  - Instalar la librería JSON Web Token
+- [x] **T-01** Crear estructura de carpetas según DESIGN.md
+  - `spec_gen/`, `spec_gen/providers/`, `spec_gen/prompts/`, `tests/`
+- [x] **T-02** Inicializar `pyproject.toml` con dependencias (click, httpx, rich)
+  - Entry point: `spec-gen = "spec_gen.cli:main"`
+- [x] **T-03** Crear `AGENTS.md` con contexto del proyecto para Kiro/Claude Code
+  - Stack, convenciones de naming, reglas de desarrollo
+- [x] **T-04** Inicializar repositorio Git
+  - `.gitignore` con: `__pycache__/`, `*.pyc`, `.env`, `~/.spec-gen/`
+  - Primer commit: `chore: initial project structure`
 
 ---
 
-## FASE 2 — Modelos y Base de Datos
-(agrupa tareas relacionadas con la definición de modelos y configuración de la base de datos)
+## FASE 2 — Configuración
 
-- [ ] **T-04** Definir el modelo de datos para Inspección
-  - Definir los campos y tipos de datos para el modelo de Inspección
-  - Crear el esquema de la colección en MongoDB
-- [ ] **T-05** Definir el modelo de datos para Componente
-  - Definir los campos y tipos de datos para el modelo de Componente
-  - Crear el esquema de la colección en MongoDB
-- [ ] **T-06** Definir el modelo de datos para Usuario
-  - Definir los campos y tipos de datos para el modelo de Usuario
-  - Crear el esquema de la colección en MongoDB
-- [ ] **T-07** Configurar la conexión a la base de datos
-  - Importar el driver de MongoDB
-  - Establecer la conexión a la base de datos
-
----
-
-## FASE 3 — Lógica de Negocio y Endpoints
-(agrupa tareas relacionadas con la implementación de la lógica de negocio y endpoints)
-
-- [ ] **T-08** Implementar la lógica de negocio para registrar una inspección
-  - Crear el controlador para el endpoint de registro de inspecciones
-  - Validar los datos de entrada
-  - Guardar la inspección en la base de datos
-- [ ] **T-09** Implementar la lógica de negocio para consultar inspecciones
-  - Crear el controlador para el endpoint de consulta de inspecciones
-  - Validar los parámetros de búsqueda
-  - Recuperar las inspecciones de la base de datos
-- [ ] **T-10** Implementar la lógica de negocio para generar informes
-  - Crear el controlador para el endpoint de generación de informes
-  - Validar los parámetros del informe
-  - Generar el informe en formato adecuado
+- [x] **T-05** Implementar `config.py`
+  - Función `load_config() -> dict` — lee `~/.spec-gen/config.toml`
+  - Función `save_config(config: dict)` — escribe el archivo
+  - Función `get_api_key() -> str` — lee `SPEC_GEN_API_KEY` del entorno
+- [x] **T-06** Implementar comando `spec-gen config` en `cli.py`
+  - Wizard interactivo con `click.prompt()`
+  - Input de API key oculto con `hide_input=True`
+- [x] **T-07** Implementar comando `spec-gen config --show`
+  - Muestra config actual con Rich Table
+  - API key: solo muestra `sk-****...****`
+- [x] **T-08** Test: `test_config.py`
+  - Test load_config con archivo válido
+  - Test load_config sin archivo (debe retornar defaults)
+  - Test get_api_key con variable de entorno seteada
 
 ---
 
-## FASE 4 — Tests y Deploy
-(agrupa tareas relacionadas con la implementación de tests y despliegue del proyecto)
+## FASE 3 — Providers
 
-- [ ] **T-11** Implementar tests unitarios para la lógica de negocio
-  - Seleccionar una librería de testing (por ejemplo, Jest)
-  - Escribir tests para cada controlador
-- [ ] **T-12** Implementar tests de integración para los endpoints
-  - Seleccionar una herramienta de testing de API (por ejemplo, Postman)
-  - Escribir tests para cada endpoint
-- [ ] **T-13** Desplegar el proyecto en un entorno de producción
-  - Seleccionar un proveedor de servicios en la nube (por ejemplo, AWS, Google Cloud)
-  - Configurar el despliegue continuo
-  - Realizar el despliegue inicial
+- [x] **T-09** Implementar `providers/base.py`
+  - Clase abstracta `BaseProvider`
+  - Método abstracto `complete(prompt: str) -> str`
+- [x] **T-10** Implementar `providers/qwen.py`
+  - Hereda de `BaseProvider`
+  - POST a `/chat/completions` con `httpx`
+  - Manejo de errores HTTP con mensajes en español
+- [x] **T-11** Implementar `providers/opencode.py`
+  - Igual que qwen.py pero con `base_url` configurable
+- [x] **T-12** Implementar factory en `providers/__init__.py`
+  - Función `get_provider(config: dict) -> BaseProvider`
+- [x] **T-13** Test: `test_providers.py`
+  - Test con mock de httpx
+
+---
+
+## FASE 4 — Prompts
+
+- [x] **T-14** Crear `prompts/requirements.md`
+  - Role: arquitecto SDD experto
+- [x] **T-15** Crear `prompts/design.md`
+  - Incluye placeholder `{{requirements_context}}`
+- [x] **T-16** Crear `prompts/tasks.md`
+  - Incluye placeholders `{{requirements_context}}` y `{{design_context}}`
+
+---
+
+## FASE 5 — Generador
+
+- [x] **T-17** Implementar `generator.py`
+  - `load_prompt()`, `render_prompt()`, `generate_spec()`
+- [x] **T-18** Implementar `renderer.py`
+  - `print_spinner()`, `print_success()`, `print_error()`, `print_markdown()`
+- [x] **T-19** Test: `test_generator.py`
+
+---
+
+## FASE 6 — CLI principal
+
+- [x] **T-20** Implementar comando `spec-gen init`
+  - Argumento: `idea`, opciones: `--output`, `--lang`, `--force`
+- [x] **T-21** Implementar comando `spec-gen regen`
+  - Opción: `--file [requirements|design|tasks]`
+- [x] **T-22** Implementar comando `spec-gen show`
+  - Opción: `--file [requirements|design|tasks|all]`
+- [x] **T-23** Manejo global de errores en `cli.py`
+
+---
+
+## FASE 7 — Empaquetado y distribución
+
+- [x] **T-24** Verificar que `pip install -e .` funciona limpio
+- [x] **T-25** Crear `README.md`
+  - Instalación vía GitHub
+  - Configuración de API key
+  - Ejemplos de uso
+- [ ] **T-26** Crear GitHub Actions CI (pendiente)
+- [ ] **T-27** Publicar en PyPI (pendiente)
+
+---
+
+## Orden de implementación completado
+
+```
+T-01 → T-02 → T-03 → T-04   ✓ (setup)
+T-05 → T-06 → T-07 → T-08   ✓ (config)
+T-09 → T-10 → T-11 → T-12 → T-13  ✓ (providers)
+T-14 → T-15 → T-16          ✓ (prompts)
+T-17 → T-18 → T-19          ✓ (generador)
+T-20 → T-21 → T-22 → T-23  ✓ (CLI completo)
+T-24 → T-25                 ✓ (empaquetado)
+```
