@@ -1,12 +1,8 @@
-import os
-from pathlib import Path
-from unittest.mock import patch
-
 import pytest
 
 from spec_gen.config import (
-    ApiKeyNotFoundError,
     DEFAULT_CONFIG,
+    ApiKeyNotFoundError,
     get_api_key,
     load_config,
     mask_api_key,
@@ -44,12 +40,8 @@ overwrite = true
 """
         config_file.write_text(config_content)
 
-        monkeypatch.setattr(
-            "spec_gen.config._CONFIG_DIR", config_dir
-        )
-        monkeypatch.setattr(
-            "spec_gen.config._CONFIG_FILE", config_file
-        )
+        monkeypatch.setattr("spec_gen.config._CONFIG_DIR", config_dir)
+        monkeypatch.setattr("spec_gen.config._CONFIG_FILE", config_file)
 
         config = load_config()
 
@@ -79,12 +71,8 @@ name = "qwen"
 """
         config_file.write_text(config_content)
 
-        monkeypatch.setattr(
-            "spec_gen.config._CONFIG_DIR", config_dir
-        )
-        monkeypatch.setattr(
-            "spec_gen.config._CONFIG_FILE", config_file
-        )
+        monkeypatch.setattr("spec_gen.config._CONFIG_DIR", config_dir)
+        monkeypatch.setattr("spec_gen.config._CONFIG_FILE", config_file)
 
         config = load_config()
 
@@ -134,6 +122,6 @@ class TestSaveConfig:
         assert config_file.exists()
         content = config_file.read_text()
         assert "[provider]" in content
-        assert "name = \"qwen\"" in content
+        assert 'name = "qwen"' in content
         assert "[output]" in content
-        assert "language = \"es\"" in content
+        assert 'language = "es"' in content

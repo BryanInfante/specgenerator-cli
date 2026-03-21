@@ -10,7 +10,6 @@ from spec_gen.config import (
     save_config,
 )
 
-
 console = Console()
 
 

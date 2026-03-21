@@ -45,22 +45,22 @@
 
 ## FASE 3 — Providers
 
-- [ ] **T-09** Implementar `providers/base.py`
+- [x] **T-09** Implementar `providers/base.py`
   - Clase abstracta `BaseProvider`
   - Método abstracto `complete(prompt: str) -> str`
   - Método `__init__(api_key: str, model: str, base_url: str)`
-- [ ] **T-10** Implementar `providers/qwen.py`
+- [x] **T-10** Implementar `providers/qwen.py`
   - Hereda de `BaseProvider`
   - POST a `/chat/completions` con `httpx`
   - Manejo de errores HTTP (401, 429, 500) con mensajes claros en español
   - Timeout de 60 segundos
-- [ ] **T-11** Implementar `providers/opencode.py`
+- [x] **T-11** Implementar `providers/opencode.py`
   - Igual que qwen.py pero con `base_url` configurable
   - Mismo contrato de interfaz
-- [ ] **T-12** Implementar factory en `providers/__init__.py`
+- [x] **T-12** Implementar factory en `providers/__init__.py`
   - Función `get_provider(config: dict) -> BaseProvider`
   - Retorna la instancia correcta según `config.provider.name`
-- [ ] **T-13** Test: `test_providers.py`
+- [x] **T-13** Test: `test_providers.py`
   - Test con mock de httpx (sin llamadas reales a la API)
   - Test manejo de error 401 (API key inválida)
   - Test manejo de timeout

@@ -1,7 +1,6 @@
 import os
-from pathlib import Path
-
 import tomllib
+from pathlib import Path
 
 
 class ConfigError(Exception):
@@ -70,7 +69,6 @@ def mask_api_key(api_key: str) -> str:
 
 
 def _toml_from_string(s: str) -> dict:
-    import re
 
     result = {}
     current_section = None
@@ -100,13 +98,16 @@ def _toml_from_string(s: str) -> dict:
 def _get_toml_module():
     try:
         import tomllib
+
         return tomllib
     except ImportError:
         try:
             import tomli
+
             return tomli
         except ImportError:
             import toml
+
             return toml
 
 
