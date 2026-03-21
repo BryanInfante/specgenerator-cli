@@ -18,24 +18,24 @@
   - Stack, convenciones de naming, reglas de desarrollo
 - [x] **T-04** Inicializar repositorio Git
   - `.gitignore` con: `__pycache__/`, `*.pyc`, `.env`, `~/.spec-gen/`
-  - Primer commit: `chore: initial project structure` (pendiente por permisos Windows)
+  - Primer commit: `chore: initial project structure`
 
 ---
 
 ## FASE 2 — Configuración
 
-- [ ] **T-05** Implementar `config.py`
+- [x] **T-05** Implementar `config.py`
   - Función `load_config() -> dict` — lee `~/.spec-gen/config.toml`
   - Función `save_config(config: dict)` — escribe el archivo
   - Función `get_api_key() -> str` — lee `SPEC_GEN_API_KEY` del entorno, error claro si no existe
-- [ ] **T-06** Implementar comando `spec-gen config` en `cli.py`
+- [x] **T-06** Implementar comando `spec-gen config` en `cli.py`
   - Wizard interactivo con `click.prompt()`
   - Input de API key oculto con `hide_input=True`
   - Confirmación al final: muestra config guardada (sin API key)
-- [ ] **T-07** Implementar comando `spec-gen config --show`
+- [x] **T-07** Implementar comando `spec-gen config --show`
   - Muestra config actual con Rich Table
   - API key: solo muestra `sk-****...****` (primeros 3 y últimos 4 chars)
-- [ ] **T-08** Test: `test_config.py`
+- [x] **T-08** Test: `test_config.py`
   - Test load_config con archivo válido
   - Test load_config sin archivo (debe retornar defaults)
   - Test get_api_key con variable de entorno seteada
