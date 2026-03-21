@@ -10,6 +10,7 @@ from spec_gen.providers.base import (
     RateLimitError,
     TimeoutError,
 )
+from spec_gen.providers.groq import GroqProvider
 from spec_gen.providers.opencode import OpenCodeProvider
 from spec_gen.providers.qwen import QwenProvider
 
@@ -101,6 +102,54 @@ class TestOpenCodeProvider:
                 provider.complete("Hola")
 
 
+class TestGroqProvider:
+    @pytest.fixture
+    def provider(self):
+        return GroqProvider(
+            api_key="test-key",
+            model="llama-3.3-70b-versatile",
+            base_url="https://api.groq.com/openai/v1",
+        )
+
+    def test_complete_success(self, provider):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "choices": [{"message": {"content": "Respuesta generada"}}]
+        }
+
+        with patch.object(provider._client, "post", return_value=mock_response):
+            result = provider.complete("Hola, ¿cómo estás?")
+
+        assert result == "Respuesta generada"
+
+    def test_complete_auth_error(self, provider):
+        mock_response = MagicMock()
+        mock_response.status_code = 401
+
+        with patch.object(provider._client, "post", return_value=mock_response):
+            with pytest.raises(AuthenticationError) as exc_info:
+                provider.complete("Hola")
+            assert "API key inválida" in str(exc_info.value)
+
+    def test_complete_rate_limit_error(self, provider):
+        mock_response = MagicMock()
+        mock_response.status_code = 429
+
+        with patch.object(provider._client, "post", return_value=mock_response):
+            with pytest.raises(RateLimitError) as exc_info:
+                provider.complete("Hola")
+            assert "Límite de solicitudes excedido" in str(exc_info.value)
+
+    def test_complete_timeout_error(self, provider):
+        with patch.object(
+            provider._client, "post", side_effect=httpx.TimeoutException("timeout")
+        ):
+            with pytest.raises(TimeoutError) as exc_info:
+                provider.complete("Hola")
+            assert "Tiempo de espera agotado" in str(exc_info.value)
+
+
 class TestGetProvider:
     def test_get_qwen_provider(self):
         config = {
@@ -133,6 +182,22 @@ class TestGetProvider:
         assert isinstance(provider, OpenCodeProvider)
         assert provider.api_key == "test-key"
         assert provider.model == "custom-model"
+
+    def test_get_groq_provider(self):
+        config = {
+            "api_key": "test-key",
+            "provider": {
+                "name": "groq",
+                "base_url": "https://api.groq.com/openai/v1",
+                "model": "llama-3.3-70b-versatile",
+            },
+        }
+
+        provider = get_provider(config)
+
+        assert isinstance(provider, GroqProvider)
+        assert provider.api_key == "test-key"
+        assert provider.model == "llama-3.3-70b-versatile"
 
     def test_get_unknown_provider(self):
         config = {

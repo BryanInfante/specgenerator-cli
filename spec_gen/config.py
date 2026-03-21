@@ -16,9 +16,9 @@ _CONFIG_FILE = _CONFIG_DIR / "config.toml"
 
 DEFAULT_CONFIG = {
     "provider": {
-        "name": "qwen",
-        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
-        "model": "qwen-plus",
+        "name": "groq",
+        "base_url": "https://api.groq.com/openai/v1",
+        "model": "llama-3.3-70b-versatile",
     },
     "output": {
         "language": "es",

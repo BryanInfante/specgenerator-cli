@@ -5,6 +5,7 @@ from spec_gen.providers.base import (
     RateLimitError,
     TimeoutError,
 )
+from spec_gen.providers.groq import GroqProvider
 from spec_gen.providers.opencode import OpenCodeProvider
 from spec_gen.providers.qwen import QwenProvider
 
@@ -22,6 +23,8 @@ def get_provider(config: dict) -> BaseProvider:
 
     if provider_name == "qwen":
         return QwenProvider(api_key, model, base_url)
+    elif provider_name == "groq":
+        return GroqProvider(api_key, model, base_url)
     elif provider_name == "opencode":
         return OpenCodeProvider(api_key, model, base_url)
     else:

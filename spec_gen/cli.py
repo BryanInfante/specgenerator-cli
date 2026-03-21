@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import click
 from rich.console import Console
 from rich.table import Table
@@ -9,6 +11,9 @@ from spec_gen.config import (
     mask_api_key,
     save_config,
 )
+from spec_gen.generator import generate_spec
+from spec_gen.providers import get_provider
+from spec_gen.renderer import print_error, print_markdown, print_spinner, print_success
 
 console = Console()
 
@@ -16,6 +21,157 @@ console = Console()
 @click.group()
 def main() -> None:
     pass
+
+
+@main.command()
+@click.argument("idea")
+@click.option("--output", "-o", default=".", help="Directorio de salida")
+@click.option("--lang", default="es", type=click.Choice(["es", "en"]), help="Idioma")
+@click.option("--force", "-f", is_flag=True, help="Sobrescribir sin confirmar")
+def init(idea: str, output: str, lang: str, force: bool) -> None:
+    output_path = Path(output).resolve()
+
+    if not force:
+        existing_files = [
+            f
+            for f in ["REQUIREMENTS.md", "DESIGN.md", "TASKS.md"]
+            if (output_path / f).exists()
+        ]
+        if existing_files:
+            console.print(
+                f"[yellow]Ya existen archivos: {', '.join(existing_files)}[/yellow]"
+            )
+            if not click.confirm("¿Sobrescribir?"):
+                console.print("[yellow]Operación cancelada.[/yellow]")
+                return
+
+    try:
+        config = load_config()
+        config["api_key"] = get_api_key()
+
+        with print_spinner("Generando especificaciones..."):
+            provider = get_provider(config)
+            spec = generate_spec(idea, provider, lang)
+
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        files_created = []
+        for filename, content in [
+            ("REQUIREMENTS.md", spec["requirements"]),
+            ("DESIGN.md", spec["design"]),
+            ("TASKS.md", spec["tasks"]),
+        ]:
+            file_path = output_path / filename
+            file_path.write_text(content, encoding="utf-8")
+            files_created.append(str(file_path))
+
+        print_success(files_created)
+
+    except ApiKeyNotFoundError:
+        print_error(
+            "La variable de entorno SPEC_GEN_API_KEY no está configurada.\n"
+            "Configúrala con: export SPEC_GEN_API_KEY=tu-api-key"
+        )
+    except Exception as e:
+        print_error(f"Error: {e}")
+        console.print("[dim]Intenta de nuevo o verifica tu conexión.[/dim]")
+
+
+@main.command()
+@click.option(
+    "--file",
+    "-f",
+    required=True,
+    type=click.Choice(["requirements", "design", "tasks"]),
+)
+@click.option("--force", "-f", is_flag=True, help="Sobrescribir sin confirmar")
+def regen(file: str, force: bool) -> None:
+    file_map = {
+        "requirements": "REQUIREMENTS.md",
+        "design": "DESIGN.md",
+        "tasks": "TASKS.md",
+    }
+
+    filename = file_map[file]
+    file_path = Path(filename)
+
+    if not file_path.exists():
+        print_error(
+            f"El archivo {filename} no existe. Ejecuta 'spec-gen init' primero."
+        )
+        return
+
+    if not force:
+        if not click.confirm(f"¿Sobrescribir {filename}?"):
+            console.print("[yellow]Operación cancelada.[/yellow]")
+            return
+
+    try:
+        req_context = ""
+        des_context = ""
+
+        if file != "requirements" and Path("REQUIREMENTS.md").exists():
+            req_context = Path("REQUIREMENTS.md").read_text(encoding="utf-8")
+
+        if file != "design" and Path("DESIGN.md").exists():
+            des_context = Path("DESIGN.md").read_text(encoding="utf-8")
+
+        config = load_config()
+        config["api_key"] = get_api_key()
+
+        idea = "Proyecto existente. Regenerando archivo específico."
+
+        with print_spinner(f"Regenerando {filename}..."):
+            provider = get_provider(config)
+            spec = generate_spec(
+                idea,
+                provider,
+                config["output"]["language"],
+                requirements_context=req_context,
+                design_context=des_context,
+            )
+
+        file_content = spec[file]
+        file_path.write_text(file_content, encoding="utf-8")
+
+        print_success([str(file_path.resolve())])
+
+    except ApiKeyNotFoundError:
+        print_error("SPEC_GEN_API_KEY no está configurada.")
+    except Exception as e:
+        print_error(f"Error: {e}")
+
+
+@main.command()
+@click.option(
+    "--file",
+    "-f",
+    default="all",
+    type=click.Choice(["requirements", "design", "tasks", "all"]),
+)
+def show(file: str) -> None:
+    file_map = {
+        "requirements": "REQUIREMENTS.md",
+        "design": "DESIGN.md",
+        "tasks": "TASKS.md",
+    }
+
+    if file == "all":
+        files_to_show = ["requirements", "design", "tasks"]
+    else:
+        files_to_show = [file]
+
+    for file_type in files_to_show:
+        filename = file_map[file_type]
+        file_path = Path(filename)
+
+        if not file_path.exists():
+            console.print(f"[yellow]{filename} no existe.[/yellow]")
+            continue
+
+        content = file_path.read_text(encoding="utf-8")
+        console.print(f"\n[bold cyan]--- {filename} ---[/bold cyan]\n")
+        print_markdown(content)
 
 
 @main.command()
@@ -56,7 +212,7 @@ def _wizard_config() -> None:
     provider_name = click.prompt(
         "Provider",
         default=current_config["provider"]["name"],
-        type=click.Choice(["qwen", "opencode"], case_sensitive=False),
+        type=click.Choice(["groq", "qwen", "opencode"], case_sensitive=False),
     )
 
     base_url = click.prompt(

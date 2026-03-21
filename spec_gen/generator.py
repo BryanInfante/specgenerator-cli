@@ -18,7 +18,13 @@ def render_prompt(template: str, **kwargs: str) -> str:
     return result
 
 
-def generate_spec(idea: str, provider: BaseProvider, lang: str = "es") -> dict:
+def generate_spec(
+    idea: str,
+    provider: BaseProvider,
+    lang: str = "es",
+    requirements_context: str = "",
+    design_context: str = "",
+) -> dict:
     requirements_template = load_prompt("requirements")
     requirements_prompt = render_prompt(
         requirements_template,
@@ -31,7 +37,7 @@ def generate_spec(idea: str, provider: BaseProvider, lang: str = "es") -> dict:
     design_prompt = render_prompt(
         design_template,
         idea=idea,
-        requirements_context=requirements_content,
+        requirements_context=requirements_context or requirements_content,
     )
 
     design_content = provider.complete(design_prompt)
@@ -40,8 +46,8 @@ def generate_spec(idea: str, provider: BaseProvider, lang: str = "es") -> dict:
     tasks_prompt = render_prompt(
         tasks_template,
         idea=idea,
-        requirements_context=requirements_content,
-        design_context=design_content,
+        requirements_context=requirements_context or requirements_content,
+        design_context=design_context or design_content,
     )
 
     tasks_content = provider.complete(tasks_prompt)

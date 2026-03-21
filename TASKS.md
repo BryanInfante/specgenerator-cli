@@ -104,20 +104,20 @@
 
 ## FASE 6 — CLI principal
 
-- [ ] **T-20** Implementar comando `spec-gen init` en `cli.py`
+- [x] **T-20** Implementar comando `spec-gen init` en `cli.py`
   - Argumento: `idea` (string)
   - Opción: `--output PATH` (default: directorio actual)
   - Opción: `--lang [es|en]` (default: es)
   - Opción: `--force` (sobreescribir sin confirmar)
   - Flujo: load config → get provider → generate → write files → print success
-- [ ] **T-21** Implementar comando `spec-gen regen`
+- [x] **T-21** Implementar comando `spec-gen regen`
   - Opción: `--file [requirements|design|tasks]` (requerida)
   - Lee archivos existentes como contexto
   - Pide confirmación antes de sobreescribir (omitir con `--force`)
-- [ ] **T-22** Implementar comando `spec-gen show`
+- [x] **T-22** Implementar comando `spec-gen show`
   - Opción: `--file [requirements|design|tasks|all]`
   - Imprime con Rich Markdown
-- [ ] **T-23** Manejo global de errores en `cli.py`
+- [x] **T-23** Manejo global de errores en `cli.py`
   - API key no configurada → mensaje claro con instrucciones
   - Archivo no encontrado en regen → mensaje claro
   - Error de red → mensaje con sugerencia de retry
