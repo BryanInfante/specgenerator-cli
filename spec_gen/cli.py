@@ -28,7 +28,8 @@ def main() -> None:
 @click.option("--output", "-o", default=".", help="Directorio de salida")
 @click.option("--lang", default="es", type=click.Choice(["es", "en"]), help="Idioma")
 @click.option("--force", "-f", is_flag=True, help="Sobrescribir sin confirmar")
-def init(idea: str, output: str, lang: str, force: bool) -> None:
+@click.option("--no-preview", is_flag=True, help="Omitir preview de archivos generados")
+def init(idea: str, output: str, lang: str, force: bool, no_preview: bool) -> None:
     output_path = Path(output).resolve()
 
     if not force:
@@ -66,6 +67,23 @@ def init(idea: str, output: str, lang: str, force: bool) -> None:
             files_created.append(str(file_path))
 
         print_success(files_created)
+
+        if not no_preview:
+            console.print("\n[bold]Preview de archivos generados:[/bold]\n")
+            for filename, content in [
+                ("REQUIREMENTS.md", spec["requirements"]),
+                ("DESIGN.md", spec["design"]),
+                ("TASKS.md", spec["tasks"]),
+            ]:
+                lines = content.split("\n")
+                preview_lines = lines[:20]
+                preview_content = "\n".join(preview_lines)
+                if len(lines) > 20:
+                    preview_content += "\n\n[dim]... (continúa)[/dim]"
+
+                console.print(f"[bold cyan]--- {filename} ---[/bold cyan]")
+                print_markdown(preview_content)
+                console.print()
 
     except ApiKeyNotFoundError:
         print_error(

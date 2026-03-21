@@ -1,180 +1,87 @@
 # DESIGN.md
-# AI Spec Generator CLI — spec-gen
 
 ## 1. Arquitectura general
+La arquitectura general del sistema de gestión de inspecciones NDT se basa en un enfoque de microservicios, donde cada componente del sistema se ejecuta como un servicio independiente. Esto permite una mayor escalabilidad, flexibilidad y mantenimiento. El sistema se divide en tres capas principales: presentación, lógica de negocio y datos. La capa de presentación se encarga de la interacción con el usuario, la capa de lógica de negocio maneja la lógica de la aplicación y la capa de datos se encarga del almacenamiento y recuperación de los datos.
 
+## 2. Decisiones de arquitectura (ADRs)
+### ADR-01: Uso de Node.js como tecnología de backend
+**Decisión:** Se ha decidido utilizar Node.js como tecnología de backend para el desarrollo de la API REST.
+**Razón:** Node.js es una plataforma ligera y eficiente que permite el desarrollo de aplicaciones escalables y de alta velocidad. Además, su gran comunidad y ecosistema de paquetes hacen que sea una excelente opción para el desarrollo de aplicaciones web.
+**Consecuencia:** La elección de Node.js como tecnología de backend implica que debemos utilizar un framework de Node.js, como Express.js, para el desarrollo de la API REST.
+
+### ADR-02: Uso de MongoDB como base de datos
+**Decisión:** Se ha decidido utilizar MongoDB como base de datos para el almacenamiento de los datos de inspecciones.
+**Razón:** MongoDB es una base de datos NoSQL que permite el almacenamiento de datos en formato JSON, lo que facilita la integración con la API REST. Además, su capacidad para manejar grandes cantidades de datos y su escalabilidad horizontal hacen que sea una excelente opción para el almacenamiento de los datos de inspecciones.
+**Consecuencia:** La elección de MongoDB como base de datos implica que debemos utilizar un driver de MongoDB para Node.js para interactuar con la base de datos.
+
+## 3. Estructura de carpetas/proyecto
 ```
-spec-gen/
-├── spec_gen/
-│   ├── __init__.py
-│   ├── cli.py            # Entrypoint Click — comandos init, regen, config, show
-│   ├── config.py         # Lectura/escritura de ~/.spec-gen/config.toml
-│   ├── generator.py      # Lógica de generación — llama al provider
-│   ├── providers/
-│   │   ├── __init__.py
-│   │   ├── base.py       # Clase abstracta BaseProvider
-│   │   ├── qwen.py       # Implementación Qwen (DashScope)
-│   │   └── opencode.py   # Implementación Open Code
-│   ├── prompts/
-│   │   ├── requirements.md   # Prompt template para REQUIREMENTS.md
-│   │   ├── design.md         # Prompt template para DESIGN.md
-│   │   └── tasks.md          # Prompt template para TASKS.md
-│   └── renderer.py       # Rich — output en terminal, spinners, colores
-├── tests/
-│   ├── test_config.py
-│   ├── test_generator.py
-│   └── test_providers.py
-├── pyproject.toml
-├── AGENTS.md             # Contexto para agentes IA que trabajen este repo
-├── REQUIREMENTS.md       # Este proyecto
-├── DESIGN.md
-└── TASKS.md
-```
-
----
-
-## 2. Decisiones de arquitectura
-
-### ADR-01: Provider pattern para LLMs
-**Decisión:** Cada provider implementa `BaseProvider` con método `complete(prompt: str) -> str`.  
-**Razón:** Permite agregar Claude, Gemini u otros en v2.0 sin tocar `generator.py`.  
-**Consecuencia:** Pequeño overhead de abstracción que vale la pena desde el inicio.
-
-### ADR-02: Prompts como archivos Markdown, no strings en código
-**Decisión:** Los prompts viven en `spec_gen/prompts/*.md`.  
-**Razón:** Son editables sin tocar código Python. La comunidad puede hacer PR solo con mejoras de prompts.  
-**Consecuencia:** Hay que leerlos desde disco en runtime (costo mínimo).
-
-### ADR-03: Configuración en TOML, no JSON ni .env
-**Decisión:** `~/.spec-gen/config.toml` con `tomllib` (stdlib desde Python 3.11).  
-**Razón:** TOML es legible, tiene tipos nativos y no requiere dependencia externa.  
-**Consecuencia:** No compatible con Python < 3.11 (aceptable, en RNF-02).
-
-### ADR-04: httpx en vez de requests
-**Decisión:** Usar `httpx` para llamadas HTTP.  
-**Razón:** Async-ready para v2.0, interfaz más moderna, soporta HTTP/2.  
-**Consecuencia:** Una dependencia más, pero reemplaza requests que ya conoce la comunidad.
-
----
-
-## 3. Flujo de generación
-
-```
-CLI init "idea"
-    │
-    ▼
-config.py → leer ~/.spec-gen/config.toml
-    │
-    ▼
-generator.py → build_context(idea)
-    │
-    ├─→ providers/qwen.py → POST /chat/completions
-    │         prompt: prompts/requirements.md + idea
-    │         → REQUIREMENTS.md
-    │
-    ├─→ providers/qwen.py → POST /chat/completions
-    │         prompt: prompts/design.md + idea + REQUIREMENTS.md
-    │         → DESIGN.md
-    │
-    └─→ providers/qwen.py → POST /chat/completions
-              prompt: prompts/tasks.md + idea + REQUIREMENTS.md + DESIGN.md
-              → TASKS.md
+inspecciones-ndt/
+├── app/
+│   ├── controllers/
+│   ├── models/
+│   ├── routes/
+│   └── services/
+├── config/
+├── db/
+├── node_modules/
+├── package.json
+├── README.md
+└── server.js
 ```
 
-**Nota:** Las 3 llamadas son secuenciales, no paralelas. DESIGN necesita REQUIREMENTS como contexto, TASKS necesita ambos.
+## 4. Modelo de datos detallado
+### Inspección
+- **id**: String — Identificador único de la inspección
+- **fecha**: Date — Fecha de la inspección
+- **tipo**: String — Tipo de inspección (por ejemplo, radiografía, ultrasonido, etc.)
+- **componente**: String — Componente inspeccionado
+- **resultado**: String — Resultado de la inspección (por ejemplo, aprobado, rechazado, etc.)
+- **evidencia**: Array<String> — Evidencia o documentación de la inspección
 
----
+### Componente
+- **id**: String — Identificador único del componente
+- **nombre**: String — Nombre del componente
+- **descripcion**: String — Descripción del componente
+- **ubicacion**: String — Ubicación del componente
 
-## 4. Interfaz de comandos
+### Usuario
+- **id**: String — Identificador único del usuario
+- **nombre**: String — Nombre del usuario
+- **correo**: String — Correo electrónico del usuario
+- **rol**: String — Rol del usuario (por ejemplo, inspector, técnico, gerente, etc.)
 
-```bash
-# Generar spec completa
-spec-gen init "descripción de la idea"
-spec-gen init "descripción" --output ./mi-proyecto
-spec-gen init "descripción" --lang en   # inglés (default: es)
+## 5. Diseño de APIs
+### /inspecciones
+- Método: POST
+- URL: /inspecciones
+- Request: { tipo: String, componente: String, resultado: String, evidencia: Array<String> }
+- Response: { id: String, fecha: Date, tipo: String, componente: String, resultado: String, evidencia: Array<String> }
 
-# Regenerar un archivo
-spec-gen regen --file requirements
-spec-gen regen --file design
-spec-gen regen --file tasks
-spec-gen regen --file tasks --force     # sin confirmación
+### /inspecciones/{id}
+- Método: GET
+- URL: /inspecciones/{id}
+- Request: None
+- Response: { id: String, fecha: Date, tipo: String, componente: String, resultado: String, evidencia: Array<String> }
 
-# Configuración
-spec-gen config                          # wizard interactivo
-spec-gen config --show                   # ver config actual (sin API key)
+### /inspecciones/tipo/{tipo}
+- Método: GET
+- URL: /inspecciones/tipo/{tipo}
+- Request: None
+- Response: Array<{ id: String, fecha: Date, tipo: String, componente: String, resultado: String, evidencia: Array<String> }>
 
-# Ver archivos
-spec-gen show --file requirements
-spec-gen show --file all
-```
+### /informes
+- Método: POST
+- URL: /informes
+- Request: { tipo: String, fechaInicio: Date, fechaFin: Date }
+- Response: { informe: String }
 
----
+## 6. Dependencias externas
+- **express**: 4.17.1 — Framework de Node.js para el desarrollo de la API REST
+- **mongodb**: 3.6.4 — Driver de MongoDB para Node.js
+- **jsonwebtoken**: 8.5.1 — Librería para la generación y verificación de tokens JSON Web
 
-## 5. Modelo de configuración
-
-```toml
-# ~/.spec-gen/config.toml
-
-[provider]
-name = "qwen"
-base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-model = "qwen-plus"
-
-[output]
-language = "es"
-overwrite = false
-```
-
-La API key se lee **siempre** desde variable de entorno `SPEC_GEN_API_KEY`.  
-Nunca se escribe en el archivo de configuración.
-
----
-
-## 6. Estructura de prompts
-
-Cada prompt template tiene 3 secciones:
-
-```markdown
-# [ROLE]
-Eres un arquitecto de software experto en Spec-Driven Development...
-
-# [CONTEXT]
-{{idea}}
-{{existing_requirements}}   ← solo en design.md y tasks.md
-{{existing_design}}         ← solo en tasks.md
-
-# [OUTPUT]
-Genera SOLO el contenido del archivo, sin explicaciones adicionales.
-El archivo debe seguir exactamente esta estructura:
-...estructura esperada...
-```
-
----
-
-## 7. Dependencias
-
-```toml
-[project]
-requires-python = ">=3.11"
-dependencies = [
-    "click>=8.1",
-    "httpx>=0.27",
-    "rich>=13.0",
-]
-```
-
-Sin más dependencias. `tomllib` es stdlib en Python 3.11+.
-
----
-
-## 8. Entradas/Salidas esperadas
-
-**Input:**
-```bash
-spec-gen init "quiero un sistema de notificaciones por email para una plataforma SaaS"
-```
-
-**Output — 3 archivos generados:**
-- `REQUIREMENTS.md` — casos de uso, criterios de aceptación, RNFs
-- `DESIGN.md` — arquitectura, ADRs, estructura de carpetas, dependencias
-- `TASKS.md` — lista de tareas atómicas con checkboxes, ordenadas por dependencia
+## 7. Seguridad
+- La API REST utiliza tokens JSON Web para la autenticación y autorización de los usuarios.
+- Los datos de inspecciones se almacenan en una base de datos MongoDB segura, con acceso restringido a los usuarios autorizados.
+- La API REST utiliza HTTPS para cifrar las comunicaciones entre el cliente y el servidor.
