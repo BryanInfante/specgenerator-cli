@@ -69,14 +69,14 @@
 
 ## FASE 4 — Prompts
 
-- [ ] **T-14** Crear `prompts/requirements.md`
+- [x] **T-14** Crear `prompts/requirements.md`
   - Role: arquitecto SDD experto
   - Output esperado: estructura completa de REQUIREMENTS.md
   - Instrucción: solo Markdown, sin explicaciones adicionales
-- [ ] **T-15** Crear `prompts/design.md`
+- [x] **T-15** Crear `prompts/design.md`
   - Igual que requirements pero para DESIGN.md
   - Incluye placeholder `{{requirements_context}}`
-- [ ] **T-16** Crear `prompts/tasks.md`
+- [x] **T-16** Crear `prompts/tasks.md`
   - Incluye placeholders `{{requirements_context}}` y `{{design_context}}`
   - Instrucción: tareas atómicas, ordenadas por dependencia, con checkboxes
 
@@ -84,18 +84,18 @@
 
 ## FASE 5 — Generador
 
-- [ ] **T-17** Implementar `generator.py`
+- [x] **T-17** Implementar `generator.py`
   - Función `load_prompt(name: str) -> str` — lee desde `spec_gen/prompts/`
   - Función `render_prompt(template: str, **kwargs) -> str` — reemplaza placeholders
   - Función `generate_spec(idea: str, provider: BaseProvider, lang: str) -> dict`
     - Retorna `{"requirements": str, "design": str, "tasks": str}`
     - Llamadas secuenciales: requirements → design (con requirements) → tasks (con ambos)
-- [ ] **T-18** Implementar `renderer.py`
+- [x] **T-18** Implementar `renderer.py`
   - Función `print_spinner(message: str)` — context manager con Rich Spinner
   - Función `print_success(files: list[str])` — tabla de archivos generados
   - Función `print_error(message: str)` — error formateado en rojo
   - Función `print_markdown(content: str)` — Markdown con syntax highlighting
-- [ ] **T-19** Test: `test_generator.py`
+- [x] **T-19** Test: `test_generator.py`
   - Test render_prompt con placeholders
   - Test generate_spec con provider mockeado
   - Test que los 3 archivos se generan con contenido no vacío
