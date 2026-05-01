@@ -1,101 +1,119 @@
 # DESIGN.md
 
 ## 1. Arquitectura general
-El sistema de notificaciones por email para SaaS se diseñará utilizando una arquitectura de microservicios, con componentes separados para el registro de usuarios, configuración de preferencias de notificación, envío de notificaciones y registro de eventos. Esto permitirá una mayor escalabilidad y flexibilidad en el sistema.
+El sistema de inventario para la ferretería se basa en una arquitectura de microservicios, donde cada componente tiene una función específica y se comunica con los demás a través de APIs RESTful. El sistema consta de tres capas principales: presentación, lógica de negocio y datos. La capa de presentación se encarga de la interfaz de usuario y la interacción con el cliente, la capa de lógica de negocio se encarga de la gestión de los procesos y la capa de datos se encarga del almacenamiento y recuperación de la información.
 
 ## 2. Decisiones de arquitectura (ADRs)
-### ADR-01: Elección de tecnología para el envío de correos electrónicos
-**Decisión:** Utilizar un servicio de correo electrónico dedicado como SendGrid o Mailgun para el envío de notificaciones.
-**Razón:** Estos servicios ofrecen una alta confiabilidad y escalabilidad en el envío de correos electrónicos, además de características adicionales como seguimiento y análisis de entregas.
-**Consecuencia:** El sistema dependerá de un servicio externo para el envío de correos electrónicos, lo que puede implicar costos adicionales y dependencia de un proveedor externo.
+### ADR-01: Uso de Node.js como tecnología de backend
+**Decisión:** Se decidió utilizar Node.js como tecnología de backend para el sistema de inventario.
+**Razón:** Se eligió Node.js por su capacidad para manejar un gran número de conexiones simultáneas, lo que es ideal para un sistema que necesita manejar múltiples solicitudes de usuario al mismo tiempo. Además, Node.js tiene una gran comunidad de desarrolladores y una amplia gama de bibliotecas y frameworks que facilitan el desarrollo de aplicaciones web.
+**Consecuencia:** La decisión de utilizar Node.js como tecnología de backend implica que el equipo de desarrollo debe tener experiencia en esta tecnología y que el sistema debe ser diseñado para aprovechar al máximo las características de Node.js.
 
-### ADR-02: Diseño de la base de datos
-**Decisión:** Utilizar una base de datos relacional como PostgreSQL para almacenar información de usuarios y notificaciones.
-**Razón:** Las bases de datos relacionales ofrecen una gran flexibilidad y capacidad de consulta, lo que es ideal para almacenar y recuperar información de usuarios y notificaciones.
-**Consecuencia:** El sistema requerirá una configuración y mantenimiento adecuados de la base de datos para garantizar el rendimiento y la integridad de los datos.
+### ADR-02: Uso de MongoDB como base de datos
+**Decisión:** Se decidió utilizar MongoDB como base de datos para el sistema de inventario.
+**Razón:** Se eligió MongoDB por su capacidad para manejar grandes cantidades de datos y su flexibilidad en cuanto a la estructura de los datos. MongoDB también es una base de datos NoSQL, lo que significa que no requiere un esquema fijo, lo que facilita la adaptación a cambios en la estructura de los datos.
+**Consecuencia:** La decisión de utilizar MongoDB como base de datos implica que el equipo de desarrollo debe tener experiencia en esta tecnología y que el sistema debe ser diseñado para aprovechar al máximo las características de MongoDB.
 
 ## 3. Estructura de carpetas/proyecto
-```
-notificaciones-saas/
-├── api/
-│   ├── usuarios/
-│   │   ├── __init__.py
-│   │   ├── models.py
-│   │   ├── views.py
-│   │   └── serializers.py
-│   ├── notificaciones/
-│   │   ├── __init__.py
-│   │   ├── models.py
-│   │   ├── views.py
-│   │   └── serializers.py
-│   └── eventos/
-│       ├── __init__.py
-│       ├── models.py
-│       ├── views.py
-│       └── serializers.py
-├── core/
-│   ├── __init__.py
-│   ├── utils.py
-│   └── tasks.py
-├── requirements.txt
-├── settings.py
-└── manage.py
+```markdown
+proyecto-inventario/
+├── backend/
+│   ├── controllers/
+│   │   ├── producto.controller.js
+│   │   ├── categoria.controller.js
+│   │   └── ...
+│   ├── models/
+│   │   ├── producto.model.js
+│   │   ├── categoria.model.js
+│   │   └── ...
+│   ├── routes/
+│   │   ├── producto.routes.js
+│   │   ├── categoria.routes.js
+│   │   └── ...
+│   ├── services/
+│   │   ├── producto.service.js
+│   │   ├── categoria.service.js
+│   │   └── ...
+│   ├── app.js
+│   └── package.json
+├── frontend/
+│   ├── public/
+│   │   ├── index.html
+│   │   └── ...
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── producto.component.js
+│   │   │   ├── categoria.component.js
+│   │   │   └── ...
+│   │   ├── containers/
+│   │   │   ├── producto.container.js
+│   │   │   ├── categoria.container.js
+│   │   │   └── ...
+│   │   ├── services/
+│   │   │   ├── producto.service.js
+│   │   │   ├── categoria.service.js
+│   │   │   └── ...
+│   │   ├── app.js
+│   │   └── index.js
+│   └── package.json
+└── README.md
 ```
 
 ## 4. Modelo de datos detallado
-### Usuario
-- `id`: `integer` — Identificador único del usuario
-- `nombre`: `string` — Nombre del usuario
-- `correo_electronico`: `string` — Correo electrónico del usuario
-- `preferencias_notificacion`: `json` — Preferencias de notificación del usuario
+### Producto
+- **id**: string — Identificador único del producto
+- **nombre**: string — Nombre del producto
+- **descripcion**: string — Descripción del producto
+- **precio**: number — Precio del producto
+- **cantidadEnStock**: number — Cantidad en stock del producto
 
-### Notificación
-- `id`: `integer` — Identificador único de la notificación
-- `tipo`: `string` — Tipo de notificación (por ejemplo, "registro", "evento", etc.)
-- `contenido`: `string` — Contenido de la notificación
-- `fecha_envio`: `datetime` — Fecha y hora de envío de la notificación
-- `usuario_destino`: `integer` — Identificador del usuario destino de la notificación
+### Categoria
+- **id**: string — Identificador único de la categoría
+- **nombre**: string — Nombre de la categoría
 
-### Evento
-- `id`: `integer` — Identificador único del evento
-- `tipo`: `string` — Tipo de evento (por ejemplo, "registro", "actualización", etc.)
-- `fecha_ocurrencia`: `datetime` — Fecha y hora de ocurrencia del evento
-- `descripcion`: `string` — Descripción del evento
+### Proveedor
+- **id**: string — Identificador único del proveedor
+- **nombre**: string — Nombre del proveedor
+- **direccion**: string — Dirección del proveedor
+
+### Pedido
+- **id**: string — Identificador único del pedido
+- **fecha**: date — Fecha del pedido
+- **total**: number — Total del pedido
+- **estado**: string — Estado del pedido
 
 ## 5. Diseño de APIs
-### /api/usuarios/registro
-- Método: `POST`
-- URL: `/api/usuarios/registro`
-- Request: `{"nombre": "string", "correo_electronico": "string"}`
-- Response: `{"id": integer, "nombre": "string", "correo_electronico": "string"}`
+### Obtener productos
+- Método: GET
+- URL: /api/productos
+- Request: {}
+- Response: [{ id, nombre, descripcion, precio, cantidadEnStock }]
 
-### /api/notificaciones/enviar
-- Método: `POST`
-- URL: `/api/notificaciones/enviar`
-- Request: `{"tipo": "string", "contenido": "string", "usuario_destino": integer}`
-- Response: `{"id": integer, "tipo": "string", "contenido": "string", "fecha_envio": "datetime"}`
+### Crear producto
+- Método: POST
+- URL: /api/productos
+- Request: { nombre, descripcion, precio, cantidadEnStock }
+- Response: { id, nombre, descripcion, precio, cantidadEnStock }
 
-### /api/eventos/registro
-- Método: `POST`
-- URL: `/api/eventos/registro`
-- Request: `{"tipo": "string", "fecha_ocurrencia": "datetime", "descripcion": "string"}`
-- Response: `{"id": integer, "tipo": "string", "fecha_ocurrencia": "datetime", "descripcion": "string"}`
+### Actualizar producto
+- Método: PUT
+- URL: /api/productos/:id
+- Request: { nombre, descripcion, precio, cantidadEnStock }
+- Response: { id, nombre, descripcion, precio, cantidadEnStock }
 
-### /api/usuarios/preferencias
-- Método: `GET`
-- URL: `/api/usuarios/preferencias`
-- Request: `{"usuario": integer}`
-- Response: `{"preferencias_notificacion": json}`
+### Eliminar producto
+- Método: DELETE
+- URL: /api/productos/:id
+- Request: {}
+- Response: {}
 
 ## 6. Dependencias externas
-- `sendgrid`: `6.9.5` — Servicio de correo electrónico dedicado
-- `mailgun`: `0.6.0` — Servicio de correo electrónico dedicado
-- `postgresql`: `12.9` — Base de datos relacional
-- `django`: `3.2.9` — Framework web de Python
-- `djangorestframework`: `3.12.2` — Framework de API REST para Django
+- **express**: 4.17.1 — Framework para Node.js
+- **mongodb**: 3.6.4 — Driver para MongoDB
+- **mongoose**: 5.10.18 — ORM para MongoDB
+- **jwt**: 8.5.1 — Librería para tokens de autenticación
 
-## 7. Seguridad
-- Utilizar autenticación y autorización adecuadas para proteger los endpoints de la API
-- Utilizar HTTPS para cifrar la comunicación entre el cliente y el servidor
-- Utilizar una política de seguridad adecuada para la base de datos y los servicios externos utilizados
-- Realizar pruebas de seguridad y penetración para identificar vulnerabilidades y mejorar la seguridad del sistema
+## 7. Seguridad (si aplica)
+- **Autenticación**: Se utilizará JSON Web Tokens (JWT) para autenticar a los usuarios.
+- **Autorización**: Se utilizarán roles y permisos para autorizar a los usuarios a realizar acciones en el sistema.
+- **Cifrado**: Se utilizará SSL/TLS para cifrar las comunicaciones entre el cliente y el servidor.

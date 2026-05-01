@@ -1,0 +1,22 @@
+name: Spec Validation
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'REQUIREMENTS.md'
+      - 'DESIGN.md'
+      - 'TASKS.md'
+
+jobs:
+  validate-specs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate Specs
+        uses: BryanInfante/spec-validator@v1
+        with:
+          groq-api-key: ${{ secrets.GROQ_API_KEY }}
+          min-score: 75
+          files-path: '.'
